@@ -25,24 +25,10 @@ def populate_planet_grid(game_map):
     planet_grid = [[[] for j in range(width)] for i in range(height)]
 
     for planet in game_map.all_planets():
-        coords = []
-        x = int(np.ceil((planet.x - planet.radius) / 15)) - 1
-        y = int(np.ceil((planet.y - planet.radius) / 15)) - 1
-        coords.append((y, x))
-        x = int(np.ceil((planet.x - planet.radius) / 15)) - 1
-        y = int(np.ceil((planet.y + planet.radius) / 15)) - 1
-        coords.append((y, x))
-        x = int(np.ceil((planet.x + planet.radius) / 15)) - 1
-        y = int(np.ceil((planet.y - planet.radius) / 15)) - 1
-        coords.append((y, x))
-        x = int(np.ceil((planet.x + planet.radius) / 15)) - 1
-        y = int(np.ceil((planet.y + planet.radius) / 15)) - 1
-        coords.append((y, x))
+        x = int(np.ceil(planet.x / 15)) - 1
+        y = int(np.ceil(planet.y / 15)) - 1
 
-        coords = set(coords)
-
-        for coord in coords:
-            planet_grid[coord[0]][coord[1]].append(planet)
+        planet_grid[y][x].append(planet)
 
 
     logging.info(planet_grid)
@@ -56,10 +42,7 @@ def initialize_stuff(game):
 def closest_dockable_planet(ship, game_map, me):
     shortest_distance = 5000000
     best_planet = None
-
-    # If only one dockable planet left, don't fight over it
-    if len(game_map.dockable_planets(me)) == 1:
-        return best_planet
+    planets = game_map.all_planets()
 
     for planet in game_map.dockable_planets(me):
         if planet.has_docking_spots():
@@ -67,17 +50,6 @@ def closest_dockable_planet(ship, game_map, me):
             if distance < shortest_distance:
                 shortest_distance = distance
                 best_planet = planet
-
-    return best_planet
-
-def closest_enemy_planet(ship, game_map, me):
-    shortest_distance = 5000000
-
-    for planet in game_map.competitor_owned_planets(me):
-        distance = ship.calculate_distance_between(planet)
-        if distance < shortest_distance:
-            shortest_distance = distance
-            best_planet = planet
 
     return best_planet
 
@@ -99,7 +71,7 @@ def populate_ship_grid(game_map, me):
     return ship_grid
 
 # GAME START
-game = hlt.Game("OneEyev3")
+game = hlt.Game("OneEyev2")
 planet_grid = initialize_stuff(game)
 
 # Then we print our start message to the logs
@@ -156,18 +128,20 @@ while True:
 
         if commanded == False:
             # If no unowned planets left, try to attack ships on competitor owned planets
-            planet = closest_enemy_planet(ship, game_map, me)
-            docked_ships = planet.all_docked_ships()
-            if len(docked_ships) > 0:
-                navigate_command = ship.new_navigate(
-                    ship.closest_point_to(docked_ships[0]),
-                    game_map,
-                    int(hlt.constants.MAX_SPEED),
-                    my_ship_grid,
-                    planet_grid)
+            for planet in game_map.competitor_owned_planets(me):
+                docked_ships = planet.all_docked_ships()
+                if len(docked_ships) > 0:
+                    navigate_command = ship.new_navigate(
+                        ship.closest_point_to(docked_ships[0]),
+                        game_map,
+                        int(hlt.constants.MAX_SPEED),
+                        my_ship_grid,
+                        planet_grid)
 
-                if navigate_command:
-                    command_queue.append(navigate_command)
+                    if navigate_command:
+                        command_queue.append(navigate_command)
+
+                break
 
     # Send our set of commands to the Halite engine for this turn
     game.send_command_queue(command_queue)
