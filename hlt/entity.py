@@ -1,6 +1,7 @@
 import logging
 import abc
 import math
+import numpy as np
 from enum import Enum
 from . import constants
 
@@ -106,6 +107,7 @@ class Planet(Entity):
         self.owner = owner if bool(int(owned)) else None
         self._docked_ship_ids = docked_ships
         self._docked_ships = {}
+        self.value = 0
 
     def get_docked_ship(self, ship_id):
         """
@@ -327,6 +329,13 @@ class Ship(Entity):
             new_target = Position(self.x + new_target_dx, self.y + new_target_dy)
             return self.new_navigate(new_target, game_map, speed, ship_grid, planet_grid, max_corrections - 1, angular_step)
         speed = speed if (distance >= speed) else distance
+
+        # destination_x = math.cos(math.radians(angle)) * speed
+        # destination_y = math.sin(math.radians(angle)) * speed
+        # grid_x = int(np.ceil(destination_x / 15)) - 1
+        # grid_y = int(np.ceil(destination_y / 15)) - 1
+        # ship_grid[grid_y][grid_x].append(Ship(0, int(self.id) * 1000000, destination_x, destination_y, 1, 0, 0, 0, None, 0, 0))
+
         logging.info("Number of corrections left: %i" % max_corrections)
         return self.thrust(speed, angle)
 

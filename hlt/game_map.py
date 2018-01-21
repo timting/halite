@@ -173,8 +173,7 @@ class Map:
         entities.remove(ship)
         logging.info(entities)
         for foreign_entity in entities:
-            if collision.intersect_segment_circle(ship, target, foreign_entity, fudge=ship.radius + 0.1):
-
+            if collision.intersect_segment_circle(ship, target, foreign_entity, fudge=ship.radius * 4):
                 return True
         return False
 class Player:
@@ -195,6 +194,13 @@ class Player:
         :rtype: list[entity.Ship]
         """
         return list(self._ships.values())
+
+    def all_undocked_ships(self):
+        """
+        :return: A list of all undocked ships which belong to the user
+        :rtype: list[entity.Ship]
+        """
+        return [ship for ship in list(self._ships.values()) if ship.docking_status == ship.DockingStatus.UNDOCKED]
 
     def get_ship(self, ship_id):
         """
